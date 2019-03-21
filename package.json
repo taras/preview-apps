@@ -1,0 +1,26 @@
+{
+  "name": "preview-apps",
+  "version": "1.0.0",
+  "main": "server.ts",
+  "author": "Taras Mankovski <taras@frontside.io>",
+  "license": "MIT",
+  "scripts": {
+    "test": "mocha test/*.test.js"
+  },
+  "devDependencies": {
+    "@babel/core": "7.4.0",
+    "@babel/preset-env": "7.4.2",
+    "@babel/register": "7.4.0",
+    "expect": "24.5.0",
+    "js-yaml": "3.13.0",
+    "lodash.isobject": "3.0.2",
+    "mocha": "6.0.2",
+    "mocha-multi-reporters": "1.1.7",
+    "source-map-support": "0.5.11",
+    "supertest": "4.0.2",
+    "tmp": "0.0.33"
+  },
+  "dependencies": {
+    "funcadelic": "0.5.6"
+  }
+}
