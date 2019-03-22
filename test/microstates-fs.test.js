@@ -1,5 +1,5 @@
 import expect from "expect";
-import { read, ls, write } from "../src/fs";
+import { read, ls, applyChange } from "../src/fs";
 import path from "path";
 import tmp from "tmp";
 import fs from "fs";
@@ -107,6 +107,10 @@ describe("microstates-fs", () => {
         items = [...dir];
       });
 
+      it("is not a true array according to Array.isArray", () => {
+        expect(Array.isArray(dir)).toBeFalsy();
+      });
+
       it("has a length", () => {
         expect(items).toHaveLength(2);
       });
@@ -127,7 +131,7 @@ describe("microstates-fs", () => {
       });
 
       it("adds a string", () => {
-        write({ message: "hello world" }, target);
+        applyChange({ message: "hello world" }, target);
 
         let result = read(target);
 
@@ -136,7 +140,7 @@ describe("microstates-fs", () => {
       });
 
       it("adds a number", () => {
-        write({ number: 42 }, target);
+        applyChange({ number: 42 }, target);
 
         let result = read(target);
 
@@ -145,7 +149,7 @@ describe("microstates-fs", () => {
       });
 
       it("adds an empty directory", () => {
-        write({ emptyDir: {} }, target);
+        applyChange({ emptyDir: {} }, target);
 
         let result = read(target);
 
@@ -154,7 +158,7 @@ describe("microstates-fs", () => {
       });
 
       it("adds a directory and a file", () => {
-        write(
+        applyChange(
           {
             files: {
               true: true
@@ -173,7 +177,7 @@ describe("microstates-fs", () => {
       it("reuses a directory when it exists", () => {
         fs.mkdirSync(path.join(target, "files"));
 
-        write(
+        applyChange(
           {
             files: {
               true: true
@@ -192,7 +196,7 @@ describe("microstates-fs", () => {
       it("can overwrite a directory with a file", () => {
         fs.mkdirSync(path.join(target, "config"));
 
-        write({ config: "do it" }, target);
+        applyChange({ config: "do it" }, target);
 
         let result = read(target);
 
@@ -205,7 +209,7 @@ describe("microstates-fs", () => {
           encoding: "utf8"
         });
 
-        write({ busyPlace: {} }, target);
+        applyChange({ busyPlace: {} }, target);
 
         let result = read(target);
 
@@ -214,7 +218,7 @@ describe("microstates-fs", () => {
       });
 
       it("can add nested directory", () => {
-        write({
+        applyChange({
           a: {
             b: {
               c: 'C'
@@ -230,7 +234,7 @@ describe("microstates-fs", () => {
       });
 
       it("can write values from an array", () => {
-        write([
+        applyChange([
           { age: 12, name: 'Tom' },
           { age: 14, name: 'Jerry' }
         ], target);
@@ -261,7 +265,7 @@ describe("microstates-fs", () => {
       });
 
       it("can delete everything", () => {
-        write({}, target);
+        applyChange({}, target);
 
         let result = read(target);
 
@@ -271,7 +275,7 @@ describe("microstates-fs", () => {
       it("can delete just one file", () => {
         let t = read(target);
 
-        write(
+        applyChange(
           append(t, {
             parent: append(t.parent, { name: undefined })
           }),
@@ -288,7 +292,7 @@ describe("microstates-fs", () => {
       it("can delete just a directory", () => {
         let t = read(target);
 
-        write(
+        applyChange(
           append(t, {
             parent: append(t.parent, { child: undefined })
           }),
@@ -307,7 +311,7 @@ describe("microstates-fs", () => {
           encoding: "utf8"
         });
 
-        write({}, target);
+        applyChange({}, target);
 
         let result = read(target);
 
@@ -316,46 +320,70 @@ describe("microstates-fs", () => {
     });
   });
 
-  // describe("TodoMVC on FS", () => {
-  //   let target;
-  //   let list;
+  describe("TodoMVC on FS", () => {
+    let target;
+    let list;
 
-  //   beforeEach(() => {
-  //     target = tmp.dirSync().name;
+    beforeEach(() => {
+      target = tmp.dirSync().name;
 
-  //     let initial = create(TodoMVC, read(TODOMVC));
-
+      let initial = create(TodoMVC, read(TODOMVC));
       
-  //     list = Store(initial, next => {
-  //       console.log('called next');
-  //       // list = next;
-  //       // write(valueOf(next), target);
-  //     });
-  //   });
+      list = Store(initial, onUpdate);
 
-  //   it('has todos', () => {
-  //     expect(list.hasTodos).toBeTruthy;
-  //   });
+      function onUpdate(next) {
+        list = next;
+        let value = valueOf(next);
+        applyChange(value, target);
+      }
+    });
 
-  //   it('has one completed todo', () => {
-  //     expect([...list.todos][0].completed.state).toBeTruthy();
-  //   });
+    it('has todos', () => {
+      expect(list.hasTodos).toBeTruthy;
+    });
 
-  //   it('has one todo with title', () => {
-  //     expect([...list.todos][0].text.state).toBe("Hello World")
-  //   });
+    it('has one completed todo', () => {
+      expect([...list.todos][0].completed.state).toBeTruthy();
+    });
 
-  //   describe("toggling completed state", () => {
-  //     beforeEach(() => {
-  //       let todos = [...list.todos];
-  //       todos[0].completed.toggle();
-  //     });
-  //     it('updated the output', () => {
-  //       expect(true).toBeTruthy()
+    it('has one todo with title', () => {
+      expect([...list.todos][0].text.state).toBe("Hello World")
+    });
+
+    describe("toggling completed state", () => {
+      let todos;
+      beforeEach(() => {
+        todos = [...list.todos];
+      });
+      it('updated the output', () => {
+        todos[0].completed.set(false);
+        expect(read(target).todos[0].completed).toBe(false);
+      });
+      it('initial state is good', () => {
+        let value = valueOf(list.todos);
+        expect(value[0]).toHaveProperty('text', 'Hello World');
+        expect(value[0]).toHaveProperty('completed', true);
+      })
+
+      describe('pushing things into an array', () => {
+        beforeEach(() => {
+          list.todos.push({ text: 'get it done!', completed: false });
+        });
         
-  //       // expect(read(target).todos[0].completed).toBe(false);
-  //     });
-      
-  //   });
-  // });
+        it('has expected microstate', () => {
+          expect(list.todos.length).toEqual(2);
+          expect([...list.todos][0].text.state).toEqual('Hello World')
+          expect([...list.todos][1].text.state).toEqual('get it done!')
+        });
+
+        it('has expected result', () => { 
+          let result = read(target); 
+  
+          expect([...result.todos]).toHaveLength(2);
+          expect(result.todos[1].text).toEqual('get it done!');
+        });
+      });
+
+    });
+  });
 });

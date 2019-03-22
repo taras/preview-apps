@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "test": "mocha test/*.test.js",
-    "coverage": "nyc --reporter=html --reporter=text mocha test/*.test.js"
+    "coverage": "nyc --reporter=html --reporter=text mocha test/*.test.js",
+    "postinstall": "cd node_modules/microstates; yarn install"
   },
   "devDependencies": {
     "@babel/core": "7.4.0",
@@ -26,6 +27,6 @@
   },
   "dependencies": {
     "funcadelic": "0.5.6",
-    "microstates": "0.13.0"
+    "microstates": "microstates/microstates.js#b965d4194788b3bcd2082ea44c030e5c44326206"
   }
 }

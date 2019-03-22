@@ -20,33 +20,36 @@ const { getOwnPropertyDescriptors, keys, defineProperty } = Object;
  */
 export function read(directory) {
   let fileNames = fs.readdirSync(directory);
-
-  let initial = defineProperty({}, Symbol.iterator, {
-    enumerable: false,
-    configurable: true,
-    value() {
-      let object = this;
-      // "0" means that it's an array (I hope)
-      let iterator = (fileNames.includes("0")
-        ? fileNames.map(index => +index).sort()
-        : fileNames)[Symbol.iterator]();
-      return {
-        next() {
-          let next = iterator.next();
-          return {
-            get done() { return next.done },
-            get value() {
-              if (next.done) {
-                return undefined;
-              } else {
-                return object[next.value];
+  
+  // "0" means that it's an array (I hope)
+  let isArrayDirectory = fileNames.includes("0");
+  
+  let initial = {};
+  if (isArrayDirectory) {
+    defineProperty(initial, Symbol.iterator, {
+      enumerable: false,
+      configurable: true,
+      value() {
+        let object = this;
+        let iterator = fileNames.map(index => +index).sort()[Symbol.iterator]();
+        return {
+          next() {
+            let next = iterator.next();
+            return {
+              get done() { return next.done },
+              get value() {
+                if (next.done) {
+                  return undefined;
+                } else {
+                  return object[next.value];
+                }
               }
             }
           }
-        }
-      };
-    }
-  });
+        };
+      }
+    });    
+  }
 
   return fileNames.reduce(
     (acc, name) =>
@@ -81,13 +84,12 @@ export function read(directory) {
  * @param {Object} directory
  * @param {String} destination
  */
-export function write(directory, destination) {
+export function applyChange(directory, destination) {
   keys(directory).forEach(name => {
     let value = directory[name];
     let itemPath = path.join(destination, name);
     if (isObject(value)) {
       if (fs.existsSync(itemPath)) {
-        // overwriting a file with a directory
         if (fs.statSync(itemPath).isFile()) {
           fs.unlinkSync(itemPath);
           fs.mkdirSync(itemPath);
@@ -100,7 +102,7 @@ export function write(directory, destination) {
           if (!fs.existsSync(path.join(itemPath, key))) {
             fs.mkdirSync(path.join(itemPath, key));
           }
-          write(value[key], path.join(itemPath, key));
+          applyChange(value[key], path.join(itemPath, key));
         } else {
           writeFile(value[key], path.join(itemPath, key));
         }
