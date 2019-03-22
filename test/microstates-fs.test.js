@@ -4,6 +4,8 @@ import path from "path";
 import tmp from "tmp";
 import fs from "fs";
 import { append } from "funcadelic";
+import TodoMVC from '@microstates/todomvc';
+import { create, Store, valueOf } from 'microstates';
 
 function fixturePath(fixtureName) {
   return path.join(__dirname, "fixtures", fixtureName);
@@ -11,6 +13,8 @@ function fixturePath(fixtureName) {
 
 let EMPTY;
 const BASIC = fixturePath("basic");
+const TODOMVC = fixturePath("todomvc");
+const ARRAY = fixturePath("array");
 
 before(() => {
   EMPTY = tmp.dirSync().name;
@@ -19,7 +23,7 @@ before(() => {
   }
 });
 
-describe("hazy-fs", () => {
+describe("microstates-fs", () => {
   describe("ls", () => {
     let names;
 
@@ -93,6 +97,24 @@ describe("hazy-fs", () => {
       it("works with CAPITALIZED files", () => {
         expect(dir.UPPERCASE).toBe("BIG CONTENT");
       });
+    });
+
+    describe("array", () => {
+      let dir, items;
+
+      beforeEach(() => {
+        dir = read(ARRAY);
+        items = [...dir];
+      });
+
+      it("has a length", () => {
+        expect(items).toHaveLength(2);
+      });
+
+      it('values can be accessed with array accessor', () => {
+        expect(items[0]).toHaveProperty('name', "Tom")
+        expect(items[1]).toHaveProperty('name', 'Jerry');
+      })
     });
   });
 
@@ -206,6 +228,20 @@ describe("hazy-fs", () => {
         expect(result.a.b).toBeDefined();
         expect(result.a.b.c).toBe('C');
       });
+
+      it("can write values from an array", () => {
+        write([
+          { age: 12, name: 'Tom' },
+          { age: 14, name: 'Jerry' }
+        ], target);
+
+        let result = read(target);
+
+        expect(result).toHaveProperty('0.age', 12);
+        expect(result).toHaveProperty('0.name', 'Tom');
+        expect(result).toHaveProperty('1.age', 14);
+        expect(result).toHaveProperty('1.name', 'Jerry');
+      });
     });
 
     describe("deleting", () => {
@@ -279,4 +315,47 @@ describe("hazy-fs", () => {
       });
     });
   });
+
+  // describe("TodoMVC on FS", () => {
+  //   let target;
+  //   let list;
+
+  //   beforeEach(() => {
+  //     target = tmp.dirSync().name;
+
+  //     let initial = create(TodoMVC, read(TODOMVC));
+
+      
+  //     list = Store(initial, next => {
+  //       console.log('called next');
+  //       // list = next;
+  //       // write(valueOf(next), target);
+  //     });
+  //   });
+
+  //   it('has todos', () => {
+  //     expect(list.hasTodos).toBeTruthy;
+  //   });
+
+  //   it('has one completed todo', () => {
+  //     expect([...list.todos][0].completed.state).toBeTruthy();
+  //   });
+
+  //   it('has one todo with title', () => {
+  //     expect([...list.todos][0].text.state).toBe("Hello World")
+  //   });
+
+  //   describe("toggling completed state", () => {
+  //     beforeEach(() => {
+  //       let todos = [...list.todos];
+  //       todos[0].completed.toggle();
+  //     });
+  //     it('updated the output', () => {
+  //       expect(true).toBeTruthy()
+        
+  //       // expect(read(target).todos[0].completed).toBe(false);
+  //     });
+      
+  //   });
+  // });
 });

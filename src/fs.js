@@ -19,7 +19,36 @@ const { getOwnPropertyDescriptors, keys, defineProperty } = Object;
  * @param {*} directory
  */
 export function read(directory) {
-  return fs.readdirSync(directory).reduce(
+  let fileNames = fs.readdirSync(directory);
+
+  let initial = defineProperty({}, Symbol.iterator, {
+    enumerable: false,
+    configurable: true,
+    value() {
+      let object = this;
+      // "0" means that it's an array (I hope)
+      let iterator = (fileNames.includes("0")
+        ? fileNames.map(index => +index).sort()
+        : fileNames)[Symbol.iterator]();
+      return {
+        next() {
+          let next = iterator.next();
+          return {
+            get done() { return next.done },
+            get value() {
+              if (next.done) {
+                return undefined;
+              } else {
+                return object[next.value];
+              }
+            }
+          }
+        }
+      };
+    }
+  });
+
+  return fileNames.reduce(
     (acc, name) =>
       defineProperty(acc, name, {
         get: stable(() => {
@@ -34,7 +63,7 @@ export function read(directory) {
         enumerable: false,
         configurable: true
       }),
-    {}
+    initial
   );
 }
 

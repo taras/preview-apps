@@ -642,6 +642,11 @@
     "@types/istanbul-lib-coverage" "^1.1.0"
     "@types/yargs" "^12.0.9"
 
+"@microstates/todomvc@0.12.0":
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/@microstates/todomvc/-/todomvc-0.12.0.tgz#3517d3b3d09a2a463bf6cb1ec02296f2097db853"
+  integrity sha512-2ykMrBqWSFXJt9adGPzBYN996w/1Qbv35lSVD3ia8cha2j9seT5i2bJXmvNnm39x1bXeg9daKVK4QIdjnVtScw==
+
 "@types/istanbul-lib-coverage@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@types/istanbul-lib-coverage/-/istanbul-lib-coverage-1.1.0.tgz#2cc2ca41051498382b43157c8227fea60363f94a"
@@ -1298,7 +1303,7 @@ fs.realpath@^1.0.0:
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha1-FQStJSMVjKpA20onh8sBQRmU6k8=
 
-funcadelic@0.5.6:
+funcadelic@0.5.6, funcadelic@^0.5.0:
   version "0.5.6"
   resolved "https://registry.yarnpkg.com/funcadelic/-/funcadelic-0.5.6.tgz#d36d40f61983bd9d46a0e642965d798aba3b1653"
   integrity sha512-Z+l1FP0jDlYw8TW1AzSg+SFRIG8IwwdCN8LFj3yUO0rge5Yv4XW92XvjFYEFuYSltJ1RWT5cyPo/D6GymRnEkA==
@@ -1962,6 +1967,14 @@ micromatch@^3.0.4, micromatch@^3.1.10:
     regex-not "^1.0.0"
     snapdragon "^0.8.1"
     to-regex "^3.0.2"
+
+microstates@0.13.0:
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/microstates/-/microstates-0.13.0.tgz#9b3be37365af474af6453174d9a63583b1a9ff71"
+  integrity sha512-0Wk33/QNUsa2QsOW+xIkePVPYiftVxjoAyn5D6D19m7qKgPdJXN5FcqeWpZI5MViwJztQJQ6UKG8gEVQ3Qn3Rg==
+  dependencies:
+    funcadelic "^0.5.0"
+    symbol-observable "^1.2.0"
 
 mime-db@~1.38.0:
   version "1.38.0"
@@ -2846,6 +2859,11 @@ supports-color@^6.0.0:
   integrity sha512-qe1jfm1Mg7Nq/NSh6XE24gPXROEVsWHxC1LIx//XNlD9iw7YZQGjZNjYN7xGaEG6iKdA8EtNFW6R0gjnVXp+wQ==
   dependencies:
     has-flag "^3.0.0"
+
+symbol-observable@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/symbol-observable/-/symbol-observable-1.2.0.tgz#c22688aed4eab3cdc2dfeacbb561660560a00804"
+  integrity sha512-e900nM8RRtGhlV36KGEU9k65K3mPb1WV70OdjfxlG2EAuM1noi/E/BaW/uMhL7bPEssK8QV57vN3esixjUvcXQ==
 
 test-exclude@^5.1.0:
   version "5.1.0"
