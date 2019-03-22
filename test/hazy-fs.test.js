@@ -8,8 +8,13 @@ function fixturePath(fixtureName) {
   return path.join(__dirname, "fixtures", fixtureName);
 }
 
-const EMPTY = fixturePath('empty');
+let EMPTY;
 const BASIC = fixturePath('basic');
+
+before(() => {
+  EMPTY = tmp.dirSync().name;
+  fs.mkdirSync(path.join(BASIC, 'emptyDir'))
+});
 
 describe("hazy-fs", () => {
 
@@ -23,6 +28,7 @@ describe("hazy-fs", () => {
     it('returns each file and directory', () => {
       expect(names).toHaveLength(7);
     });
+
 
     it('has all of the files in it', () => {
       expect(names.sort()).toMatchObject([
