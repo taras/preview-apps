@@ -1,5 +1,5 @@
 import expect from "expect";
-import { read, ls, write } from "../src/hazy-fs";
+import { read, ls, write } from "../src/fs";
 import path from "path";
 import tmp from "tmp";
 import fs from "fs";
