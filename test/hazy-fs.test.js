@@ -190,6 +190,22 @@ describe("hazy-fs", () => {
         expect(result.busyPlace).toEqual({});
         expect(ls(result)).toEqual(["busyPlace"]);
       });
+
+      it("can add nested directory", () => {
+        write({
+          a: {
+            b: {
+              c: 'C'
+            }
+          }
+        }, target);
+
+        let result = read(target);
+
+        expect(result.a).toBeDefined();
+        expect(result.a.b).toBeDefined();
+        expect(result.a.b.c).toBe('C');
+      });
     });
 
     describe("deleting", () => {
@@ -248,6 +264,18 @@ describe("hazy-fs", () => {
         expect(ls(result)).toEqual(["parent"]);
         expect(ls(result.parent)).toEqual(["name"]);
         expect(result.parent.child).toBeUndefined();
+      });
+
+      it("can remove a file", () => {
+        fs.writeFileSync(path.join(target, "serial"), "XXX", {
+          encoding: "utf8"
+        });
+
+        write({}, target);
+
+        let result = read(target);
+
+        expect(ls(result)).toEqual([]);
       });
     });
   });

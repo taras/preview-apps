@@ -5,7 +5,8 @@
   "author": "Taras Mankovski <taras@frontside.io>",
   "license": "MIT",
   "scripts": {
-    "test": "mocha test/*.test.js"
+    "test": "mocha test/*.test.js",
+    "coverage": "nyc nyc --reporter=html --reporter=text mocha test/*.test.js"
   },
   "devDependencies": {
     "@babel/core": "7.4.0",
@@ -16,6 +17,7 @@
     "lodash.isobject": "3.0.2",
     "mocha": "6.0.2",
     "mocha-multi-reporters": "1.1.7",
+    "nyc": "13.3.0",
     "rimraf": "2.6.3",
     "source-map-support": "0.5.11",
     "supertest": "4.0.2",

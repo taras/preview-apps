@@ -47,6 +47,7 @@ export function write(directory, destination) {
     let itemPath = path.join(destination, name);
     if (isObject(value)) {
       if (fs.existsSync(itemPath)) {
+        // overwriting a file with a directory
         if (fs.statSync(itemPath).isFile()) {
           fs.unlinkSync(itemPath);
           fs.mkdirSync(itemPath);
@@ -56,20 +57,14 @@ export function write(directory, destination) {
       }
       keys(value).forEach(key => {
         if (isObject(value[key])) {
+          if (!fs.existsSync(path.join(itemPath, key))) {
+            fs.mkdirSync(path.join(itemPath, key))
+          }
           write(value[key], path.join(itemPath, key))
         } else {
           writeFile(value[key], path.join(itemPath, key))
         }
       })
-    } else if (value === undefined) {
-      if (fs.existsSync(itemPath)) {
-        let stat = fs.statSync(itemPath);
-        if (stat.isFile()) {
-          fs.unlinkSync(itemPath);
-        } else if (stat.isDirectory()) {
-          rimraf.sync(itemPath);
-        }
-      }
     } else {
       writeFile(value, itemPath);
     }
