@@ -3,6 +3,7 @@ import path from "path";
 import yaml from "js-yaml";
 import { stable } from "funcadelic";
 import isObject from "lodash.isobject";
+import rimraf from "rimraf";
 
 const { getOwnPropertyDescriptors, keys, defineProperty } = Object;
 
@@ -40,6 +41,7 @@ export function read(directory) {
 }
 
 export function write(directory, destination) {
+
   keys(directory).forEach(name => {
     let value = directory[name];
     let itemPath = path.join(destination, name);
@@ -59,17 +61,42 @@ export function write(directory, destination) {
           writeFile(value[key], path.join(itemPath, key))
         }
       })
+    } else if (value === undefined) {
+      if (fs.existsSync(itemPath)) {
+        let stat = fs.statSync(itemPath);
+        if (stat.isFile()) {
+          fs.unlinkSync(itemPath);
+        } else if (stat.isDirectory()) {
+          rimraf.sync(itemPath);
+        }
+      }
     } else {
       writeFile(value, itemPath);
     }
   })
+
+  ls(read(destination)).forEach(name => {
+    if (!directory.hasOwnProperty(name)) {
+      let itemPath = path.join(destination, name);
+      let stats = fs.statSync(itemPath);
+      if (stats.isFile()) {
+        fs.unlinkSync(itemPath);
+      } else if (stats.isDirectory()) {
+        rimraf.sync(itemPath);
+      }
+    }
+  });
 }
 
 function writeFile(value, filePath) {
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
-    fs.rmdirSync(filePath);
+    rimraf.sync(filePath);
   }
-  fs.writeFileSync(filePath, yaml.safeDump(value), { encoding: "utf8" });      
+  if (value === undefined) {
+    fs.existsSync(filePath) && fs.unlinkSync(filePath);
+  } else {
+    fs.writeFileSync(filePath, yaml.safeDump(value), { encoding: "utf8" });      
+  }
 }
 
 export const ls = o => keys(getOwnPropertyDescriptors(o));

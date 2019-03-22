@@ -16,6 +16,7 @@
     "lodash.isobject": "3.0.2",
     "mocha": "6.0.2",
     "mocha-multi-reporters": "1.1.7",
+    "rimraf": "2.6.3",
     "source-map-support": "0.5.11",
     "supertest": "4.0.2",
     "tmp": "0.0.33"
