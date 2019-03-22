@@ -16,8 +16,6 @@ const { getOwnPropertyDescriptors, keys, defineProperty } = Object;
  *
  * When the value is read, the corresponding files or directory is read.
  * The value is then parsed as an yaml file.
- * 
- * 
  * @param {*} directory
  */
 export function read(directory) {
@@ -40,8 +38,21 @@ export function read(directory) {
   );
 }
 
+/**
+ * Write merges a directory object into a destination. It will look for
+ * iterable keys on the directory object, ignoring non iterable keys.
+ *
+ * The idea here is that only files that were materialized would need to
+ * be updated. Reading a file would materialize it which could cause an
+ * upchanged file to be updated but hopefully the impact of this will
+ * be nullified by the Yaml serializing same data same way.
+ *
+ * When undefined value is encountered, this is treated as a deletion.
+ *
+ * @param {Object} directory
+ * @param {String} destination
+ */
 export function write(directory, destination) {
-
   keys(directory).forEach(name => {
     let value = directory[name];
     let itemPath = path.join(destination, name);
@@ -53,22 +64,22 @@ export function write(directory, destination) {
           fs.mkdirSync(itemPath);
         }
       } else {
-        fs.mkdirSync(itemPath)
+        fs.mkdirSync(itemPath);
       }
       keys(value).forEach(key => {
         if (isObject(value[key])) {
           if (!fs.existsSync(path.join(itemPath, key))) {
-            fs.mkdirSync(path.join(itemPath, key))
+            fs.mkdirSync(path.join(itemPath, key));
           }
-          write(value[key], path.join(itemPath, key))
+          write(value[key], path.join(itemPath, key));
         } else {
-          writeFile(value[key], path.join(itemPath, key))
+          writeFile(value[key], path.join(itemPath, key));
         }
-      })
+      });
     } else {
       writeFile(value, itemPath);
     }
-  })
+  });
 
   ls(read(destination)).forEach(name => {
     if (!directory.hasOwnProperty(name)) {
@@ -83,6 +94,11 @@ export function write(directory, destination) {
   });
 }
 
+/**
+ *
+ * @param {any} value
+ * @param {string} filePath
+ */
 function writeFile(value, filePath) {
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     rimraf.sync(filePath);
@@ -90,7 +106,7 @@ function writeFile(value, filePath) {
   if (value === undefined) {
     fs.existsSync(filePath) && fs.unlinkSync(filePath);
   } else {
-    fs.writeFileSync(filePath, yaml.safeDump(value), { encoding: "utf8" });      
+    fs.writeFileSync(filePath, yaml.safeDump(value), { encoding: "utf8" });
   }
 }
 
