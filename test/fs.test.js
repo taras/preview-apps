@@ -1,11 +1,11 @@
-import expect from "expect";
-import { read, ls, applyChange } from "../src/fs";
-import path from "path";
-import tmp from "tmp";
-import fs from "fs";
-import { append } from "funcadelic";
-import TodoMVC from '@microstates/todomvc';
-import { create, Store, valueOf } from 'microstates';
+const expect = require("expect");
+const { read, ls, applyChange } = require("../src/fs");
+const path = require("path");
+const tmp = require("tmp");
+const fs = require("fs");
+const { append } = require("funcadelic");
+const { default: TodoMVC } = require("@microstates/todomvc");
+const { create, Store, valueOf } = require("microstates");
 
 function fixturePath(fixtureName) {
   return path.join(__dirname, "fixtures", fixtureName);
@@ -115,10 +115,10 @@ describe("microstates-fs", () => {
         expect(items).toHaveLength(2);
       });
 
-      it('values can be accessed with array accessor', () => {
-        expect(items[0]).toHaveProperty('name', "Tom")
-        expect(items[1]).toHaveProperty('name', 'Jerry');
-      })
+      it("values can be accessed with array accessor", () => {
+        expect(items[0]).toHaveProperty("name", "Tom");
+        expect(items[1]).toHaveProperty("name", "Jerry");
+      });
     });
   });
 
@@ -218,33 +218,36 @@ describe("microstates-fs", () => {
       });
 
       it("can add nested directory", () => {
-        applyChange({
-          a: {
-            b: {
-              c: 'C'
+        applyChange(
+          {
+            a: {
+              b: {
+                c: "C"
+              }
             }
-          }
-        }, target);
+          },
+          target
+        );
 
         let result = read(target);
 
         expect(result.a).toBeDefined();
         expect(result.a.b).toBeDefined();
-        expect(result.a.b.c).toBe('C');
+        expect(result.a.b.c).toBe("C");
       });
 
       it("can write values from an array", () => {
-        applyChange([
-          { age: 12, name: 'Tom' },
-          { age: 14, name: 'Jerry' }
-        ], target);
+        applyChange(
+          [{ age: 12, name: "Tom" }, { age: 14, name: "Jerry" }],
+          target
+        );
 
         let result = read(target);
 
-        expect(result).toHaveProperty('0.age', 12);
-        expect(result).toHaveProperty('0.name', 'Tom');
-        expect(result).toHaveProperty('1.age', 14);
-        expect(result).toHaveProperty('1.name', 'Jerry');
+        expect(result).toHaveProperty("0.age", 12);
+        expect(result).toHaveProperty("0.name", "Tom");
+        expect(result).toHaveProperty("1.age", 14);
+        expect(result).toHaveProperty("1.name", "Jerry");
       });
     });
 
@@ -328,7 +331,7 @@ describe("microstates-fs", () => {
       target = tmp.dirSync().name;
 
       let initial = create(TodoMVC, read(TODOMVC));
-      
+
       list = Store(initial, onUpdate);
 
       function onUpdate(next) {
@@ -338,16 +341,16 @@ describe("microstates-fs", () => {
       }
     });
 
-    it('has todos', () => {
+    it("has todos", () => {
       expect(list.hasTodos).toBeTruthy;
     });
 
-    it('has one completed todo', () => {
+    it("has one completed todo", () => {
       expect([...list.todos][0].completed.state).toBeTruthy();
     });
 
-    it('has one todo with title', () => {
-      expect([...list.todos][0].text.state).toBe("Hello World")
+    it("has one todo with title", () => {
+      expect([...list.todos][0].text.state).toBe("Hello World");
     });
 
     describe("toggling completed state", () => {
@@ -355,35 +358,34 @@ describe("microstates-fs", () => {
       beforeEach(() => {
         todos = [...list.todos];
       });
-      it('updated the output', () => {
+      it("updated the output", () => {
         todos[0].completed.set(false);
         expect(read(target).todos[0].completed).toBe(false);
       });
-      it('initial state is good', () => {
+      it("initial state is good", () => {
         let value = valueOf(list.todos);
-        expect(value[0]).toHaveProperty('text', 'Hello World');
-        expect(value[0]).toHaveProperty('completed', true);
-      })
-
-      describe('pushing things into an array', () => {
-        beforeEach(() => {
-          list.todos.push({ text: 'get it done!', completed: false });
-        });
-        
-        it('has expected microstate', () => {
-          expect(list.todos.length).toEqual(2);
-          expect([...list.todos][0].text.state).toEqual('Hello World')
-          expect([...list.todos][1].text.state).toEqual('get it done!')
-        });
-
-        it('has expected result', () => { 
-          let result = read(target); 
-  
-          expect([...result.todos]).toHaveLength(2);
-          expect(result.todos[1].text).toEqual('get it done!');
-        });
+        expect(value[0]).toHaveProperty("text", "Hello World");
+        expect(value[0]).toHaveProperty("completed", true);
       });
 
+      describe("pushing things into an array", () => {
+        beforeEach(() => {
+          list.todos.push({ text: "get it done!", completed: false });
+        });
+
+        it("has expected microstate", () => {
+          expect(list.todos.length).toEqual(2);
+          expect([...list.todos][0].text.state).toEqual("Hello World");
+          expect([...list.todos][1].text.state).toEqual("get it done!");
+        });
+
+        it("has expected result", () => {
+          let result = read(target);
+
+          expect([...result.todos]).toHaveLength(2);
+          expect(result.todos[1].text).toEqual("get it done!");
+        });
+      });
     });
   });
 });

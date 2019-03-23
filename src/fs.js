@@ -1,9 +1,9 @@
-import fs from "fs";
-import path from "path";
-import yaml from "js-yaml";
-import { stable } from "funcadelic";
-import isObject from "lodash.isobject";
-import rimraf from "rimraf";
+const fs = require("fs");
+const path = require("path");
+const yaml = require("js-yaml");
+const { stable } = require("funcadelic");
+const isObject = require("lodash.isobject");
+const rimraf = require("rimraf");
 
 const { getOwnPropertyDescriptors, keys, defineProperty } = Object;
 
@@ -18,12 +18,12 @@ const { getOwnPropertyDescriptors, keys, defineProperty } = Object;
  * The value is then parsed as an yaml file.
  * @param {*} directory
  */
-export function read(directory) {
+function read(directory) {
   let fileNames = fs.readdirSync(directory);
-  
+
   // "0" means that it's an array (I hope)
   let isArrayDirectory = fileNames.includes("0");
-  
+
   let initial = {};
   if (isArrayDirectory) {
     defineProperty(initial, Symbol.iterator, {
@@ -31,12 +31,17 @@ export function read(directory) {
       configurable: true,
       value() {
         let object = this;
-        let iterator = fileNames.map(index => +index).sort()[Symbol.iterator]();
+        let iterator = fileNames
+          .map(index => +index)
+          .sort()
+          [Symbol.iterator]();
         return {
           next() {
             let next = iterator.next();
             return {
-              get done() { return next.done },
+              get done() {
+                return next.done;
+              },
               get value() {
                 if (next.done) {
                   return undefined;
@@ -44,11 +49,11 @@ export function read(directory) {
                   return object[next.value];
                 }
               }
-            }
+            };
           }
         };
       }
-    });    
+    });
   }
 
   return fileNames.reduce(
@@ -84,7 +89,7 @@ export function read(directory) {
  * @param {Object} directory
  * @param {String} destination
  */
-export function applyChange(directory, destination) {
+function applyChange(directory, destination) {
   keys(directory).forEach(name => {
     let value = directory[name];
     let itemPath = path.join(destination, name);
@@ -141,4 +146,10 @@ function writeFile(value, filePath) {
   }
 }
 
-export const ls = o => keys(getOwnPropertyDescriptors(o));
+const ls = o => keys(getOwnPropertyDescriptors(o));
+
+module.exports = {
+  read,
+  applyChange,
+  ls
+}
