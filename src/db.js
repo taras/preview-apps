@@ -1,8 +1,9 @@
 const log = require("@cardstack/logger")("db");
 const git = require("@cardstack/git/service");
-const { Reference, Cred, Signature } = require("nodegit");
+const { Signature, Branch, Commit, Merge } = require("nodegit");
 const { Any, Store, create, valueOf } = require("microstates");
 const { read, ls, applyChanges } = require("./fs");
+const crypto = require('crypto');
 const os = require("os");
 
 module.exports = class DB {
@@ -26,12 +27,14 @@ module.exports = class DB {
   constructor(Type, repo, remote) {
     this.repo = repo;
     this.remote = remote;
+    this.fetchOpts = remote.fetchOpts;
     this.Type = Type;
     this.value = read(this.path);
 
     this.hostname = os.hostname();
     this.myName = `PID${process.pid} on ${this.hostname}`;
     this.myEmail = `${os.userInfo().username}@${this.hostname}`;
+    this.targetBranch = "master";
 
     this.onChange = $ => {
       applyChanges(valueOf($), this.path);
@@ -49,14 +52,26 @@ module.exports = class DB {
     return this.value !== valueOf(this.$);
   }
 
-  async getHead() {
-    let head = await Reference.nameToId(this.repo, "HEAD");
+  async getHeadCommit(targetBranch = "master", remote = false) {
+    let { repo } = this;
 
-    let commit = await this.repo.getCommit(head);
-
-    return commit;
+    let headRef;
+    try {
+      if (remote) {
+        headRef = await Branch.lookup(repo, `origin/${targetBranch}`, Branch.BRANCH.REMOTE);
+      } else {
+        headRef = await Branch.lookup(repo, targetBranch, Branch.BRANCH.LOCAL);
+      }
+    } catch(err) {
+      if (err.errorFunction !== 'Branch.lookup') {
+        throw err;
+      }
+    }
+    if (headRef) {
+      return await Commit.lookup(repo, headRef.target());
+    }
   }
-
+  
   async commit(message = `Wrote to the database`) {
     let { repo } = this;
 
@@ -70,7 +85,7 @@ module.exports = class DB {
 
     let oid = await index.writeTree();
 
-    let head = await this.getHead();
+    let head = await this.getHeadCommit();
 
     let author = Signature.now(this.myName, this.myEmail);
 
@@ -79,6 +94,81 @@ module.exports = class DB {
     
     let commit = await repo.createCommit("HEAD", author, commiter, message, oid, [head])
 
-    return commit.tostrS();
+    return commit;
+  }
+
+  async _makeMergeCommit(newCommit, commitOpts) {
+    let headCommit = await this.getHeadCommit();
+
+    if (!headCommit) {
+      // new branch, so no merge needed
+      return newCommit;
+    }
+
+    let baseOid = await Merge.base(this.repo, newCommit, headCommit);
+    if (baseOid.equal(headCommit.id())) {
+      // fast forward (we think), so no merge needed
+      return newCommit;
+    }
+
+    let index = await Merge.commits(this.repo, newCommit, headCommit, null);
+
+    if (index.hasConflicts()) {
+      throw new GitConflict(index);
+    }
+    
+    let treeOid = await index.writeTreeTo(this.repo);
+
+    let tree = await Tree.lookup(this.repo, treeOid, null);
+
+    let { author, committer } = signature(commitOpts);
+
+    let mergeCommitOid = await Commit.create(this.repo, null, author, committer, 'UTF-8', `Clean merge into ${this.targetBranch}`, tree, 2, [newCommit, headCommit]);
+
+    return await Commit.lookup(this.repo, mergeCommitOid);
+  }
+
+  async push() {
+    let { repo } = this;
+
+    let commitOpts = {
+      author: Signature.now(this.myName, this.myEmail),
+      committer: Signature.now(this.myName, this.myEmail)
+    }
+
+    let newCommit = await this.getHeadCommit();
+    
+    let mergeCommit = await this._makeMergeCommit(newCommit, commitOpts);
+
+    const remoteBranchName = `temp-remote-${crypto.randomBytes(20).toString('hex')}`;
+
+    await Branch.create(repo, remoteBranchName, mergeCommit, false);
+
+    let remote = await repo.getRemote("origin");
+
+    try {
+      await remote.push([`refs/heads/${remoteBranchName}:refs/heads/${this.targetBranch}`], this.fetchOpts);
+    } catch (err) {
+      // pull remote before allowing process to continue
+      await this.repo.fetchAll(this.fetchOpts);
+      throw err;
+    }
   }
 };
+
+class GitConflict extends Error {
+  constructor(index) {
+    super();
+    this.index = index;
+  }
+}
+
+function signature(commitOpts) {
+  let date = commitOpts.authorDate || moment();
+  let author = Signature.create(commitOpts.authorName, commitOpts.authorEmail, date.unix(), date.utcOffset());
+  let committer = commitOpts.committerName ? Signature.create(commitOpts.committerName, commitOpts.committerEmail, date.unix(), date.utcOffset()) : author;
+  return {
+    author,
+    committer
+  };
+}

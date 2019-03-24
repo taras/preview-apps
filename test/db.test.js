@@ -14,10 +14,10 @@ logger.configure({
 
 const exec = promisify(process.exec);
 
-async function setup() {
+async function setup(cmd = "git init --bare") {
   let tmpDir = tmp.dirSync().name;
 
-  await exec(`cd ${tmpDir} && git init`);
+  await exec(`cd ${tmpDir} && ${cmd}`);
 
   return {
     path: tmpDir,
@@ -26,14 +26,16 @@ async function setup() {
 }
 
 describe("db", () => {
-  let db, remote;
+  let db, remote, workdir;
   beforeEach(async () => {
     remote = await setup();
+    workdir = await setup(`git init; git remote add origin ${remote.path}`)
 
-    writeFileSync(join(remote.path, "name"), "taras");
+    writeFileSync(join(workdir.path, "name"), "taras");
 
-    await remote.exec("git add name");
-    await remote.exec('git commit -m "Added name file"');
+    await workdir.exec("git add name");
+    await workdir.exec('git commit -m "Added name file"');
+    await workdir.exec('git push origin master')
 
     class Schema {
       constructor() {
@@ -73,12 +75,20 @@ describe("db", () => {
       expect(db.hasChanges).toBe(true);
     });
     describe("creating a commit with one file", () => {
-      let commit;
+      let oid;
       beforeEach(async () => {
-        commit = await db.commit();
+        oid = (await db.commit()).tostrS();
       });
       it('creates a commit', () => {
-        expect(typeof commit).toBe('string');
+        expect(typeof oid).toBe('string');
+      });
+      describe("pushing the new commit to master", () => {
+        beforeEach(async () => {
+          await db.push();
+        });
+        it('pushes the remote repo', async () => {
+          expect((await remote.exec(`git rev-parse HEAD`)).stdout).toContain(oid);
+        });
       });
     });
   });
