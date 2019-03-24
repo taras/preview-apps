@@ -1,5 +1,5 @@
 const expect = require("expect");
-const { read, ls, applyChange } = require("../src/fs");
+const { read, ls, applyChanges } = require("../src/fs");
 const path = require("path");
 const tmp = require("tmp");
 const fs = require("fs");
@@ -131,7 +131,7 @@ describe("microstates-fs", () => {
       });
 
       it("adds a string", () => {
-        applyChange({ message: "hello world" }, target);
+        applyChanges({ message: "hello world" }, target);
 
         let result = read(target);
 
@@ -140,7 +140,7 @@ describe("microstates-fs", () => {
       });
 
       it("adds a number", () => {
-        applyChange({ number: 42 }, target);
+        applyChanges({ number: 42 }, target);
 
         let result = read(target);
 
@@ -149,7 +149,7 @@ describe("microstates-fs", () => {
       });
 
       it("adds an empty directory", () => {
-        applyChange({ emptyDir: {} }, target);
+        applyChanges({ emptyDir: {} }, target);
 
         let result = read(target);
 
@@ -158,7 +158,7 @@ describe("microstates-fs", () => {
       });
 
       it("adds a directory and a file", () => {
-        applyChange(
+        applyChanges(
           {
             files: {
               true: true
@@ -177,7 +177,7 @@ describe("microstates-fs", () => {
       it("reuses a directory when it exists", () => {
         fs.mkdirSync(path.join(target, "files"));
 
-        applyChange(
+        applyChanges(
           {
             files: {
               true: true
@@ -196,7 +196,7 @@ describe("microstates-fs", () => {
       it("can overwrite a directory with a file", () => {
         fs.mkdirSync(path.join(target, "config"));
 
-        applyChange({ config: "do it" }, target);
+        applyChanges({ config: "do it" }, target);
 
         let result = read(target);
 
@@ -209,7 +209,7 @@ describe("microstates-fs", () => {
           encoding: "utf8"
         });
 
-        applyChange({ busyPlace: {} }, target);
+        applyChanges({ busyPlace: {} }, target);
 
         let result = read(target);
 
@@ -218,7 +218,7 @@ describe("microstates-fs", () => {
       });
 
       it("can add nested directory", () => {
-        applyChange(
+        applyChanges(
           {
             a: {
               b: {
@@ -237,7 +237,7 @@ describe("microstates-fs", () => {
       });
 
       it("can write values from an array", () => {
-        applyChange(
+        applyChanges(
           [{ age: 12, name: "Tom" }, { age: 14, name: "Jerry" }],
           target
         );
@@ -268,7 +268,7 @@ describe("microstates-fs", () => {
       });
 
       it("can delete everything", () => {
-        applyChange({}, target);
+        applyChanges({}, target);
 
         let result = read(target);
 
@@ -278,7 +278,7 @@ describe("microstates-fs", () => {
       it("can delete just one file", () => {
         let t = read(target);
 
-        applyChange(
+        applyChanges(
           append(t, {
             parent: append(t.parent, { name: undefined })
           }),
@@ -295,7 +295,7 @@ describe("microstates-fs", () => {
       it("can delete just a directory", () => {
         let t = read(target);
 
-        applyChange(
+        applyChanges(
           append(t, {
             parent: append(t.parent, { child: undefined })
           }),
@@ -314,7 +314,7 @@ describe("microstates-fs", () => {
           encoding: "utf8"
         });
 
-        applyChange({}, target);
+        applyChanges({}, target);
 
         let result = read(target);
 
@@ -337,7 +337,7 @@ describe("microstates-fs", () => {
       function onUpdate(next) {
         list = next;
         let value = valueOf(next);
-        applyChange(value, target);
+        applyChanges(value, target);
       }
     });
 

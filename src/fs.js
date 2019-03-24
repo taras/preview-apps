@@ -89,7 +89,7 @@ function read(directory) {
  * @param {Object} directory
  * @param {String} destination
  */
-function applyChange(directory, destination) {
+function applyChanges(directory, destination) {
   keys(directory).forEach(name => {
     let value = directory[name];
     let itemPath = path.join(destination, name);
@@ -107,7 +107,7 @@ function applyChange(directory, destination) {
           if (!fs.existsSync(path.join(itemPath, key))) {
             fs.mkdirSync(path.join(itemPath, key));
           }
-          applyChange(value[key], path.join(itemPath, key));
+          applyChanges(value[key], path.join(itemPath, key));
         } else {
           writeFile(value[key], path.join(itemPath, key));
         }
@@ -150,6 +150,6 @@ const ls = o => keys(getOwnPropertyDescriptors(o));
 
 module.exports = {
   read,
-  applyChange,
+  applyChanges,
   ls
 }
