@@ -41,7 +41,7 @@ describe("db", () => {
       }
     }
 
-    db = await DB.open(Schema, remote.path);
+    db = await DB.open(Schema, { url: remote.path });
   });
 
   describe("opening the database", () => {
@@ -71,6 +71,15 @@ describe("db", () => {
     });
     it("detects that there are changes", () => {
       expect(db.hasChanges).toBe(true);
+    });
+    describe("creating a commit with one file", () => {
+      let commit;
+      beforeEach(async () => {
+        commit = await db.commit();
+      });
+      it('creates a commit', () => {
+        expect(typeof commit).toBe('string');
+      });
     });
   });
 });
