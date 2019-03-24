@@ -1,7 +1,7 @@
 const git = require("@cardstack/git/service");
 const process = require("child_process");
 const expect = require("expect");
-const { writeFileSync, existsSync } = require("fs");
+const { writeFileSync, existsSync, readFileSync } = require("fs");
 const { join } = require("path");
 const tmp = require("tmp");
 const { promisify } = require("util");
@@ -21,7 +21,12 @@ async function setup(cmd = "git init --bare") {
 
   return {
     path: tmpDir,
-    exec: cmd => exec(`cd ${tmpDir} && ${cmd}`)
+    exec: async cmd => {
+      let result = await exec(`cd ${tmpDir} && ${cmd}`);
+      return result.stdout
+    },
+    writeFileSync: (file, content) => writeFileSync(join(tmpDir, file), content),
+    readFileSync: file => readFileSync(join(tmpDir, file), { encoding: "utf8" })
   };
 }
 
@@ -31,7 +36,7 @@ describe("db", () => {
     remote = await setup();
     workdir = await setup(`git init; git remote add origin ${remote.path}`)
 
-    writeFileSync(join(workdir.path, "name"), "taras");
+    workdir.writeFileSync("name", "taras");
 
     await workdir.exec("git add name");
     await workdir.exec('git commit -m "Added name file"');
@@ -85,9 +90,13 @@ describe("db", () => {
       describe("pushing the new commit to master", () => {
         beforeEach(async () => {
           await db.push();
+          await workdir.exec("git pull origin master");
         });
         it('pushes the remote repo', async () => {
-          expect((await remote.exec(`git rev-parse HEAD`)).stdout).toContain(oid);
+          expect(await remote.exec(`git rev-parse HEAD`)).toContain(oid);
+        });
+        it('has the changed file in the repository', () => {
+          expect(workdir.readFileSync('name')).toBe("taras!!!\n");
         });
       });
     });
